@@ -1,0 +1,139 @@
+<?php
+// $Id$
+
+function whois_access() {
+  return array('access whois', 'access user whois');
+}
+
+function whois_menu($maycache) {
+
+  if ($maycache) {
+    $items[] = array(
+      'path' => 'whois',
+      'title' => t('Whois lookup'),
+      'callback' => 'whois_whois_page',
+      'access' => user_access('access whois'),
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items[] = array(
+      'path' => 'admin/settings/whois',
+      'title' => t('Whois'),
+      'description' => t('Configure some basic options.'),
+      'callback' => 'drupal_get_form',
+      'callback arguments' => 'whois_settings',
+      'access' => user_access('administer site configuration'),
+      'type' => MENU_NORMAL_ITEM,
+    );
+  }
+
+  return $items;
+}
+
+function whois_settings() {
+  $form = array();
+
+  $form['whois_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Whois configuration'),
+    '#collapsed' => TRUE,
+  );
+  $form['whois_settings']['whois_output_method'] = array(
+    '#type' => 'radios',
+    '#title' => t('Output method'),
+    '#default_value' => variable_get('whois_output_method', 'basic'),
+    '#description' => t(''),
+    '#options' => array(
+        'basic' => 'Basic',
+        'html' => 'HTMLized',
+        'object' => 'PHP object',
+    ),
+  );
+
+  return system_settings_form($form);
+}
+
+function whois_whois_form() {
+  $form = array();
+  $address = isset($_POST['whois_address']) ? $_POST['whois_address'] : arg(1);
+  $form['whois_lookup'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Whois lookup'),
+    '#collapsed' => TRUE,
+  );
+  $form['whois_lookup']['whois_address'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Address'),
+    '#default_value' => $address,
+    '#description' => t('Enter a domain name or IP address to lookup whois of. Do not include <em>http://, https://, etc.</em> prefix or <em>trailing slash</em>.'),
+    '#required' => TRUE,
+  );
+  $form['whois_lookup']['whois_submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+
+  return $form;
+}
+
+$address = '';
+
+function whois_whois_page() {
+  global $address;
+  $address1 = $_POST['whois_address'] ? $_POST['whois_address'] : arg(1);
+  $address = $address ? $address : $address1;
+  $whois = '';
+
+  if (isset($address)) {
+      $whois = whois_get_whois($address);
+      $title = t('Whois Lookup: !address', array('!address' => $address));
+      drupal_set_breadcrumb(array(l(t('Home'), '<front>'), l(t('Whois lookup'), 'whois')));
+      drupal_set_title($title);
+  }
+
+  return $whois ? $whois : drupal_get_form('whois_whois_form');
+}
+
+function whois_get_whois($address) {
+  $data = '';
+
+  if ($address != '') {
+    include_once('phpwhois/whois.main.php');
+    include_once('phpwhois/whois.utils.php');
+    $option = variable_get('whois_output_method', 'basic');
+    $whois = new Whois();
+    $result = $whois->Lookup($address);
+
+    switch($option) {
+      case 'html':
+        if (!empty($result['rawdata'])) {
+          $utils = new utils;
+          $data .= $utils->showHTML($result);
+        }
+        else {
+          $data .= implode($whois->Query['errstr'],"\n<br></br>");
+        }  
+      break;
+
+      case 'object':
+        if ($whois->Query['status'] < 0) {
+          $data .= implode($whois->Query['errstr'],"\n<br></br>");
+        }
+        else {
+          $utils = new utils;
+          $data .= $utils->showObject($result);
+        }
+      break;
+
+      default:
+        if(!empty($result['rawdata'])) {
+          $data .= '<pre>'.implode($result['rawdata'],"\n").'</pre>';
+        }
+        else {
+          $data .= implode($whois->Query['errstr'],"\n<br></br>");
+        } 
+      break;
+    }
+  }
+
+  return $data;
+}
