@@ -1,3 +1,0 @@
-; $Id$
-name = Whois lookup
-description = Whois lookup for Drupal. Uses phpwhois library from http://phpwhois.sf.net/
