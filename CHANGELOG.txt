@@ -1,0 +1,8 @@
+Whois lookup 6.x-1.0
+  New features:
+    o #224736 - Hourly threshold for whois lookup request.
+    o #151861 - Watchdog logging of lookup requests.
+    o Dynamic(AJAX) loading and viewing of whois results.
+    o Changed the form interface to look sleeker than before.
+    o Form appears on page with whois results.
+    o Default "Output method" is now set to "HTMLized".

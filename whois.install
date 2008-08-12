@@ -1,0 +1,11 @@
+// $Id$
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function whois_uninstall() {
+  variable_del('whois_output_method');
+  variable_del('whois_enable_ajax');
+  variable_del('whois_hourly_threshold');
+  variable_del('whois_log_watchdog');
+}

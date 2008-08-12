@@ -1,0 +1,5 @@
+; $Id$
+name = Whois lookup
+description = Enables a whois lookup utility form, and depends on <a href="http://phpwhois.sf.net/">phpWhois</a> library.
+core = 6.x
+

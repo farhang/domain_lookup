@@ -1,0 +1,239 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_requirements()
+ */
+function whois_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+  switch ($phase) {
+    case 'install' :
+    case 'runtime' :
+      $path = drupal_get_path('module', 'whois') . '/phpwhois/whois.main.php';
+	  if (!file_exists($path)) {
+        $requirements['whois'] = array(
+          'title' => $t('Whois lookup'),
+          'description' => $t("Whois module requires !phpwhois to do whois queries. !download and put it's contents in <em>modules/whois</em> directory (so that it looks something like this: <em>modules/whois/phpwhois/example.php</em>).", array('!phpwhois' => l('phpWhois library', 'http://phpwhois.sf.net/'), '!download' => l('Download phpWhois', 'http://sourceforge.net/project/showfiles.php?group_id=31207&package_id=23260'))),
+          'severity' => $phase == 'install' ? REQUIREMENT_WARNING : REQUIREMENT_ERROR,
+          'value' => $t('!phpwhois library missing', array('!phpwhois' => l('phpWhois', 'http://phpwhois.sf.net/'))),
+        );
+      }
+  }
+  return $requirements;
+}
+
+/**
+ * Implementation of hook_perm()
+ */
+function whois_perm() {
+  return array('access whois');
+}
+
+/**
+ * Implementation of hook_menu()
+ */
+function whois_menu() {
+  $items = array();
+
+  $items['whois'] = array(
+    'title' => t('Whois lookup'),
+    'page callback' => 'whois_whois_page',
+    'access arguments' => array('access whois'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/settings/whois'] = array(
+    'title' => t('Whois lookup'),
+    'description' => t('Configure Whois lookup output style, dynamic(AJAX) results, hourly threshold, and more.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('whois_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+function whois_settings() {
+  $form = array();
+
+  $form['whois_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Basic configuration'),
+    '#collapsed' => TRUE,
+  );
+  $form['whois_settings']['whois_output_method'] = array(
+    '#type' => 'radios',
+    '#title' => t('Output method'),
+    '#default_value' => variable_get('whois_output_method', 'html'),
+    '#description' => t(''),
+    '#options' => array(
+      'basic' => 'Basic',
+      'html' => 'HTMLized',
+      'object' => 'PHP object',
+    ),
+  );
+  $form['whois_settings']['whois_enable_ajax'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Dynamic lookup (AJAX)'),
+    '#default_value' => variable_get('whois_enable_ajax', 1),
+    '#description' => t('Lookup and view the whois results dynamically (i.e. without reloading page) using AJAX request.'),
+  );
+  $form['whois_settings']['whois_hourly_threshold'] = array('#type' => 'select',
+    '#title' => t('Hourly threshold'),
+    '#options' => drupal_map_assoc(array(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59)),
+    '#default_value' => variable_get('whois_hourly_threshold', 13),
+    '#description' => t('The maximum number of whois lookups a user can perform per hour.'),
+  );
+  $form['whois_log_watchdog'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Log watchdog entry'),
+    '#default_value' => variable_get('whois_log_watchdog', 1),
+    '#description' => t('Log a watchdog entry for each whois lookup performed.'),
+  );
+  return system_settings_form($form);
+}
+
+function whois_whois_page() {
+  $output = '';
+  $address = $_POST['address'] ? whois_parse_url($_POST['address']) : arg(1);
+
+  if (isset($address)) {
+    // Check for hourly threshold.
+    if (flood_is_allowed('whois', variable_get('whois_hourly_threshold', 13))) {
+      $output .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
+      $output .= whois_get_whois($address);
+    }
+    else {
+      $output .= t("You cannot do more than %number whois lookups per hour. Please try again later.", array('%number' => variable_get('whois_hourly_threshold', 13)));
+    }
+    if (isset($_POST['address'])) {
+      // Avoid debug information(devel.module) from being added to the preview.
+      $GLOBALS['devel_shutdown'] = FALSE;
+
+      if (variable_get('whois_log_watchdog', 1)) {
+        // Watchdog entry for lookup request.
+        watchdog('whois',
+          t('Whois lookup for: %address', array('%address' => $address)),
+          array($address), WATCHDOG_NOTICE, l('View', "whois/$address") . ' · ' . l('Address', "http://$address/"));
+      }
+
+      // Stop further processing and return requested data.
+      exit(drupal_json(array('html' => $output)));
+    }
+    drupal_set_breadcrumb(array(l(t('Home'), '<front>'), l(t('Whois lookup'), 'whois')));
+  }
+  // Load JS and CSS for dynamic lookups using AJAX.
+  if (variable_get('whois_enable_ajax', 1)) {
+    $path = drupal_get_path('module', 'whois');
+    drupal_add_js($path . '/whois.js');
+    drupal_add_css($path . '/whois.css');
+  }
+
+  return drupal_get_form('whois_whois_form') . '<div id="live-preview-container"><div id="live-whois-preview">' . $output . '</div><div id="live-whois-preview-background"></div></div>';
+}
+
+function whois_whois_form() {
+  $form = array();
+
+  $form['whois_lookup'] = array(
+    '#type' => 'fieldset',
+    '#collapsed' => TRUE,
+  );
+  $form['whois_lookup']['whois_address'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Lookup address'),
+    '#default_value' => arg(1),
+    '#required' => TRUE,
+    '#prefix' => '<div class="container-inline">',
+  );
+  $form['whois_lookup']['whois_submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Lookup'),
+    '#suffix' => '</div>',
+  );
+  $form['whois_lookup']['whois_description'] = array(
+    '#value' => '<div class="description" style="margin: 0;">' . t('Enter a domain name or IP address for <em>whois</em> information.') . '</div>',
+  );
+
+  return $form;
+}
+
+function whois_whois_form_submit($form, &$form_state) {
+  global $user;
+  $address = whois_parse_url($form_state['values']['whois_address']);
+
+  if (variable_get('whois_log_watchdog', 1)) {
+    // Watchdog entry for lookup request.
+    watchdog('whois',
+      t('Whois lookup for: %address', array('%address' => $address)),
+      array($address), WATCHDOG_NOTICE, l('View', "whois/$address") . ' · ' . l('Address', "http://$address/"));
+  }
+
+  $form_state['redirect'] = 'whois/' . $address;
+  return;
+}
+
+function whois_get_whois($address) {
+  $data = '';
+  $path = drupal_get_path('module', 'whois') . '/phpwhois/whois.main.php';
+
+  if (!file_exists($path)) {
+    drupal_set_message(t('There are problems with <em>Whois lookup</em> setup. Report to the website administrators promptly!', array('@status' => url('admin/logs/status'))), 'error');
+  }
+  elseif ($address != '') {
+    include_once('phpwhois/whois.main.php');
+    include_once('phpwhois/whois.utils.php');
+    $option = variable_get('whois_output_method', 'html');
+    $whois = new Whois();
+    $result = $whois->Lookup($address);
+
+    switch($option) {
+      case 'html':
+        if (!empty($result['rawdata'])) {
+          $utils = new utils;
+          $data .= $utils->showHTML($result);
+        }
+        else {
+          $data .= implode($whois->Query['errstr'],"\n<br></br>");
+        }  
+      break;
+
+      case 'object':
+        if ($whois->Query['status'] < 0) {
+          $data .= implode($whois->Query['errstr'],"\n<br></br>");
+        }
+        else {
+          $utils = new utils;
+          $data .= $utils->showObject($result);
+        }
+      break;
+
+      default:
+        if(!empty($result['rawdata'])) {
+          $data .= '<pre>' . implode($result['rawdata'],"\n") . '</pre>';
+        }
+        else {
+          $data .= implode($whois->Query['errstr'],"\n<br></br>");
+        } 
+      break;
+    }
+  }
+
+  return $data;
+}
+
+function whois_parse_url($url) {
+  $r  = "^(?:(?P<scheme>\w+)://)?";
+  $r .= "(?:(?P<login>\w+):(?P<pass>\w+)@)?";
+  $r .= "(?P<host>(?:(?P<subdomain>[\w\.]+)\.)?" . "(?P<domain>\w+\.(?P<extension>\w+)))";
+  $r .= "(?::(?P<port>\d+))?";
+  $r .= "(?P<path>[\w/]*/(?P<file>\w+(?:\.\w+)?)?)?";
+  $r .= "(?:\?(?P<arg>[\w=&]+))?";
+  $r .= "(?:#(?P<anchor>\w+))?";
+  $r = "!$r!";                                                // Delimiters
+
+  preg_match($r, $url, $result);
+
+  return $result[6];
+}

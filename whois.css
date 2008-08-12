@@ -1,0 +1,13 @@
+/* $Id$ */
+
+div.live-progress-panel { 
+  background-color: #FBEDA5;/*#CF4342*/
+  color: #111111;
+  font-family: Arial, Helvetica, Verdana;
+  font-size: 14px;
+  padding: 3px 6px;
+  position: fixed;
+  right: 16px;
+  top: 0px;
+  z-index: 999;
+}
