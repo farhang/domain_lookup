@@ -223,17 +223,31 @@ function whois_get_whois($address) {
   return $data;
 }
 
+/**
+ * Parse the user input to extract an IP or domainname.
+ * Elements like http:// are removed
+ *
+ * @param $url
+ *   The user input
+ * 
+ * @return 
+ *   The cleaned up domain or IP to look up
+ */
 function whois_parse_url($url) {
-  $r  = "^(?:(?P<scheme>\w+)://)?";
-  $r .= "(?:(?P<login>\w+):(?P<pass>\w+)@)?";
-  $r .= "(?P<host>(?:(?P<subdomain>[\w\.]+)\.)?" . "(?P<domain>\w+\.(?P<extension>\w+)))";
-  $r .= "(?::(?P<port>\d+))?";
-  $r .= "(?P<path>[\w/]*/(?P<file>\w+(?:\.\w+)?)?)?";
-  $r .= "(?:\?(?P<arg>[\w=&]+))?";
-  $r .= "(?:#(?P<anchor>\w+))?";
-  $r = "!$r!";                                                // Delimiters
+  include_once('phpwhois/whois.ip.lib.php');
+  if (validip($url)) {
+    return $url;
+  } else {
+    $r  = "^(?:(?P<scheme>\w+)://)?";
+    $r .= "(?:(?P<login>\w+):(?P<pass>\w+)@)?";
+    $r .= "(?P<host>(?:(?P<subdomain>[\w\.]+)\.)?" . "(?P<domain>\w+\.(?P<extension>\w+)))";
+    $r .= "(?::(?P<port>\d+))?";
+    $r .= "(?P<path>[\w/]*/(?P<file>\w+(?:\.\w+)?)?)?";
+    $r .= "(?:\?(?P<arg>[\w=&]+))?";
+    $r .= "(?:#(?P<anchor>\w+))?";
+    $r = "!$r!";                                                // Delimiters
 
-  preg_match($r, $url, $result);
-
-  return $result[6];
+    return $result[6];
+  }
 }
+
