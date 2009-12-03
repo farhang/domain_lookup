@@ -30,6 +30,17 @@ function whois_perm() {
   return array('access whois');
 }
 
+function whois_theme() {
+  return array(
+    'whois_domain_status' => array(
+      'template' => 'whois_domain_status',
+      'arguments' => array('address' => NULL,       // The address that was looked up
+                            'registered' => NULL,   // Boolean, weather the domain is already registered
+                            'result_data' => NULL), // Full result data, optionally used in template to further customise the output
+    ),
+  );
+}
+
 /**
  * Implementation of hook_menu()
  */
@@ -66,10 +77,11 @@ function whois_settings() {
     '#type' => 'radios',
     '#title' => t('Output method'),
     '#default_value' => variable_get('whois_output_method', 'html'),
-    '#description' => t(''),
+    '#description' => t('The style in which the whois results are presented to the user.'),
     '#options' => array(
       'basic' => 'Basic',
       'html' => 'HTMLized',
+      'html_status' => 'HTMLized status only',
       'object' => 'PHP object',
     ),
   );
@@ -95,13 +107,16 @@ function whois_settings() {
 }
 
 function whois_whois_page() {
+  if (!user_access('access whois')) {
+    return;
+  }
+
   $output = '';
   $address = $_POST['address'] ? whois_parse_url($_POST['address']) : arg(1);
 
   if (isset($address)) {
     // Check for hourly threshold.
     if (flood_is_allowed('whois', variable_get('whois_hourly_threshold', 13))) {
-      $output .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
       $output .= whois_display_whois($address);
     }
     else {
@@ -126,6 +141,32 @@ function whois_whois_page() {
   return drupal_get_form('whois_whois_form') . '<div id="live-preview-container"><div id="live-whois-preview">' . $output . '</div><div id="live-whois-preview-background"></div></div>';
 }
 
+/**
+ * Implementation of hook_block().
+ */
+function whois_block($op = 'list', $delta = 0) {
+
+  // listing of blocks, such as on the admin/block page
+  if ($op == "list") {
+    $block[0]["info"] = t('Whois mini form');
+    return $block;
+  } 
+  elseif ($op == 'view') {
+
+    switch ($delta) {
+      case 0:
+        $block['subject'] = 'Whois';
+        $block_content = drupal_get_form('whois_whois_mini_form'); 
+        break;
+      }
+    $block['content'] = $block_content;
+    return $block;
+  }
+} // end whois_block
+
+/**
+ * Implementation of hook_form().
+ */
 function whois_whois_form() {
   $form = array();
 
@@ -152,6 +193,27 @@ function whois_whois_form() {
   return $form;
 }
 
+/**
+ * Implementation of hook_form().
+ * 
+ * Produce a form for the mini_form block
+ */
+function whois_whois_mini_form() {
+  $form = array();
+
+  $form['whois_address'] = array(
+    '#type' => 'textfield',
+    '#size' => 15,
+    '#required' => TRUE,
+  );
+  $form['whois_submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Lookup'),
+  );
+
+  return $form;
+}
+
 function whois_whois_form_submit($form, &$form_state) {
   global $user;
   $address = whois_parse_url($form_state['values']['whois_address']);
@@ -160,6 +222,15 @@ function whois_whois_form_submit($form, &$form_state) {
   return;
 }
 
+/*
+ *  Wrapper around whois_whois_form_submit
+ */
+function whois_whois_mini_form_submit($form, &$form_state) {
+  whois_whois_form_submit($form, $form_state);
+  return;
+}
+
+
 function whois_display_whois($address) {
   $data = '';
   $result = whois_get_whois($address);
@@ -167,6 +238,7 @@ function whois_display_whois($address) {
     $option = variable_get('whois_output_method', 'html');
     switch ($option) {
       case 'html':
+        $data .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
         if (!empty($result['rawdata'])) {
           $utils = new utils;
           $data .= $utils->showHTML($result);
@@ -174,9 +246,19 @@ function whois_display_whois($address) {
         else {
           $data .= implode($whois->Query['errstr'], "\n<br />");
         }  
+        break;
+
+      case 'html_status':
+        if (!empty($result['rawdata'])) {
+          $data .= theme('whois_domain_status', $address, $result['regrinfo']['registered'] != 'no', $result);
+        }
+        else {
+          $data .= implode($whois->Query['errstr'], "\n<br />");
+        }  
       break;
 
       case 'object':
+        $data .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
         if ($whois->Query['status'] < 0) {
           $data .= implode($whois->Query['errstr'], "\n<br />");
         }
@@ -186,13 +268,14 @@ function whois_display_whois($address) {
         }
       break;
 
-      case 'basic': // 'basic' is the default
+      case 'basic': // 'basic' is the default 
       default:
+        $data .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
         if (!empty($result['rawdata'])) {
           $data .= '<pre>' . implode($result['rawdata'], "\n") . '</pre>';
         }
         else {
-          $data .= implode($whois->Query['errstr'], "\n<br ");
+          $data .= implode($whois->Query['errstr'], "\n<br />");
         } 
       break;
     }
