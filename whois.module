@@ -340,6 +340,9 @@ function whois_parse_url($url) {
     $r .= "(?:#(?P<anchor>\w+))?";
     $r = "!$r!";                                                // Delimiters
 
+    $result = array();
+    preg_match($r, $url, $result);
+
     return $result[6];
   }
 }
