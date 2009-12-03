@@ -11,7 +11,7 @@ function whois_requirements($phase) {
     case 'install' :
     case 'runtime' :
       $path = drupal_get_path('module', 'whois') . '/phpwhois/whois.main.php';
-	  if (!file_exists($path)) {
+      if (!file_exists($path)) {
         $requirements['whois'] = array(
           'title' => $t('Whois lookup'),
           'description' => $t("Whois module requires !phpwhois to do whois queries. !download and put it's contents in <em>modules/whois</em> directory (so that it looks something like this: <em>modules/whois/phpwhois/example.php</em>).", array('!phpwhois' => l('phpWhois library', 'http://phpwhois.sf.net/'), '!download' => l('Download phpWhois', 'http://sourceforge.net/project/showfiles.php?group_id=31207&package_id=23260'))),
@@ -102,7 +102,7 @@ function whois_whois_page() {
     // Check for hourly threshold.
     if (flood_is_allowed('whois', variable_get('whois_hourly_threshold', 13))) {
       $output .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
-      $output .= whois_get_whois($address);
+      $output .= whois_display_whois($address);
     }
     else {
       $output .= t("You cannot do more than %number whois lookups per hour. Please try again later.", array('%number' => variable_get('whois_hourly_threshold', 13)));
@@ -110,13 +110,6 @@ function whois_whois_page() {
     if (isset($_POST['address'])) {
       // Avoid debug information(devel.module) from being added to the preview.
       $GLOBALS['devel_shutdown'] = FALSE;
-
-      if (variable_get('whois_log_watchdog', 1)) {
-        // Watchdog entry for lookup request.
-        watchdog('whois',
-          t('Whois lookup for: %address', array('%address' => $address)),
-          array($address), WATCHDOG_NOTICE, l('View', "whois/$address") . ' · ' . l('Address', "http://$address/"));
-      }
 
       // Stop further processing and return requested data.
       exit(drupal_json(array('html' => $output)));
@@ -163,17 +156,60 @@ function whois_whois_form_submit($form, &$form_state) {
   global $user;
   $address = whois_parse_url($form_state['values']['whois_address']);
 
-  if (variable_get('whois_log_watchdog', 1)) {
-    // Watchdog entry for lookup request.
-    watchdog('whois',
-      t('Whois lookup for: %address', array('%address' => $address)),
-      array($address), WATCHDOG_NOTICE, l('View', "whois/$address") . ' · ' . l('Address', "http://$address/"));
-  }
-
   $form_state['redirect'] = 'whois/' . $address;
   return;
 }
 
+function whois_display_whois($address) {
+  $data = '';
+  $result = whois_get_whois($address);
+  if ($result) {
+    $option = variable_get('whois_output_method', 'html');
+    switch ($option) {
+      case 'html':
+        if (!empty($result['rawdata'])) {
+          $utils = new utils;
+          $data .= $utils->showHTML($result);
+        }
+        else {
+          $data .= implode($whois->Query['errstr'], "\n<br />");
+        }  
+      break;
+
+      case 'object':
+        if ($whois->Query['status'] < 0) {
+          $data .= implode($whois->Query['errstr'], "\n<br />");
+        }
+        else {
+          $utils = new utils;
+          $data .= $utils->showObject($result);
+        }
+      break;
+
+      case 'basic': // 'basic' is the default
+      default:
+        if (!empty($result['rawdata'])) {
+          $data .= '<pre>' . implode($result['rawdata'], "\n") . '</pre>';
+        }
+        else {
+          $data .= implode($whois->Query['errstr'], "\n<br ");
+        } 
+      break;
+    }
+  }
+
+  return $data;
+}
+
+/**
+ * Return the whois information for a given host.
+ *
+ * @param $address
+ *   The address of the host to look up.
+ *
+ * @return
+ *   An object describing the Whois result.
+ */
 function whois_get_whois($address) {
   $data = '';
   $path = drupal_get_path('module', 'whois') . '/phpwhois/whois.main.php';
@@ -184,43 +220,16 @@ function whois_get_whois($address) {
   elseif ($address != '') {
     include_once('phpwhois/whois.main.php');
     include_once('phpwhois/whois.utils.php');
-    $option = variable_get('whois_output_method', 'html');
     $whois = new Whois();
-    $result = $whois->Lookup($address);
-
-    switch($option) {
-      case 'html':
-        if (!empty($result['rawdata'])) {
-          $utils = new utils;
-          $data .= $utils->showHTML($result);
-        }
-        else {
-          $data .= implode($whois->Query['errstr'],"\n<br></br>");
-        }  
-      break;
-
-      case 'object':
-        if ($whois->Query['status'] < 0) {
-          $data .= implode($whois->Query['errstr'],"\n<br></br>");
-        }
-        else {
-          $utils = new utils;
-          $data .= $utils->showObject($result);
-        }
-      break;
-
-      default:
-        if(!empty($result['rawdata'])) {
-          $data .= '<pre>' . implode($result['rawdata'],"\n") . '</pre>';
-        }
-        else {
-          $data .= implode($whois->Query['errstr'],"\n<br></br>");
-        } 
-      break;
+    if (variable_get('whois_log_watchdog', 1)) {
+      // Watchdog entry for lookup request.
+      watchdog('whois',
+        t('Whois lookup for: %address', array('%address' => $address)),
+        array($address), WATCHDOG_NOTICE, l('View', "whois/$address") . ' · ' . l('Address', "http://$address/"));
     }
+    return $whois->Lookup($address);
   }
-
-  return $data;
+  return FALSE;
 }
 
 /**
@@ -237,7 +246,8 @@ function whois_parse_url($url) {
   include_once('phpwhois/whois.ip.lib.php');
   if (validip($url)) {
     return $url;
-  } else {
+  }
+  else {
     $r  = "^(?:(?P<scheme>\w+)://)?";
     $r .= "(?:(?P<login>\w+):(?P<pass>\w+)@)?";
     $r .= "(?P<host>(?:(?P<subdomain>[\w\.]+)\.)?" . "(?P<domain>\w+\.(?P<extension>\w+)))";
