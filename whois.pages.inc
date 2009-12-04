@@ -66,40 +66,12 @@ function whois_whois_form() {
   return $form;
 }
 
-/**
- * Implementation of hook_form().
- * 
- * Produce a form for the mini_form block
- */
-function whois_whois_mini_form() {
-  $form = array();
-
-  $form['whois_address'] = array(
-    '#type' => 'textfield',
-    '#size' => 15,
-    '#required' => TRUE,
-  );
-  $form['whois_submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Lookup'),
-  );
-
-  return $form;
-}
 
 function whois_whois_form_submit($form, &$form_state) {
   global $user;
   $address = whois_parse_url($form_state['values']['whois_address']);
 
   $form_state['redirect'] = 'whois/' . $address;
-  return;
-}
-
-/*
- *  Wrapper around whois_whois_form_submit
- */
-function whois_whois_mini_form_submit($form, &$form_state) {
-  whois_whois_form_submit($form, $form_state);
   return;
 }
 

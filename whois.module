@@ -72,6 +72,34 @@ function whois_block($op = 'list', $delta = 0) {
   }
 } // end whois_block
 
+/**
+ * Implementation of hook_form().
+ * 
+ * Produce a form for the mini_form block
+ */
+function whois_whois_mini_form() {
+  $form = array();
+
+  $form['whois_address'] = array(
+    '#type' => 'textfield',
+    '#size' => 15,
+    '#required' => TRUE,
+  );
+  $form['whois_submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Lookup'),
+  );
+
+  return $form;
+}
+
+/*
+ *  Wrapper around whois_whois_form_submit
+ */
+function whois_whois_mini_form_submit($form, &$form_state) {
+  whois_whois_form_submit($form, $form_state);
+  return;
+}
 
 function whois_display_whois($address) {
   $data = '';
