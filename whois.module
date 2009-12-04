@@ -51,6 +51,7 @@ function whois_menu() {
     'title' => t('Whois lookup'),
     'page callback' => 'whois_whois_page',
     'access arguments' => array('access whois'),
+    'file' => 'whois.pages.inc',
     'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/settings/whois'] = array(
@@ -58,87 +59,12 @@ function whois_menu() {
     'description' => t('Configure Whois lookup output style, dynamic(AJAX) results, hourly threshold, and more.'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('whois_settings'),
+    'file' => 'whois.admin.inc',
     'access arguments' => array('administer site configuration'),
     'type' => MENU_NORMAL_ITEM,
   );
 
   return $items;
-}
-
-function whois_settings() {
-  $form = array();
-
-  $form['whois_settings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Basic configuration'),
-    '#collapsed' => TRUE,
-  );
-  $form['whois_settings']['whois_output_method'] = array(
-    '#type' => 'radios',
-    '#title' => t('Output method'),
-    '#default_value' => variable_get('whois_output_method', 'html'),
-    '#description' => t('The style in which the whois results are presented to the user.'),
-    '#options' => array(
-      'basic' => 'Basic',
-      'html' => 'HTMLized',
-      'html_status' => 'HTMLized status only',
-      'object' => 'PHP object',
-    ),
-  );
-  $form['whois_settings']['whois_enable_ajax'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Dynamic lookup (AJAX)'),
-    '#default_value' => variable_get('whois_enable_ajax', 1),
-    '#description' => t('Lookup and view the whois results dynamically (i.e. without reloading page) using AJAX request.'),
-  );
-  $form['whois_settings']['whois_hourly_threshold'] = array('#type' => 'select',
-    '#title' => t('Hourly threshold'),
-    '#options' => drupal_map_assoc(array(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59)),
-    '#default_value' => variable_get('whois_hourly_threshold', 13),
-    '#description' => t('The maximum number of whois lookups a user can perform per hour.'),
-  );
-  $form['whois_log_watchdog'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Log watchdog entry'),
-    '#default_value' => variable_get('whois_log_watchdog', 1),
-    '#description' => t('Log a watchdog entry for each whois lookup performed.'),
-  );
-  return system_settings_form($form);
-}
-
-function whois_whois_page() {
-  if (!user_access('access whois')) {
-    return;
-  }
-
-  $output = '';
-  $address = $_POST['address'] ? whois_parse_url($_POST['address']) : arg(1);
-
-  if (isset($address)) {
-    // Check for hourly threshold.
-    if (flood_is_allowed('whois', variable_get('whois_hourly_threshold', 13))) {
-      $output .= whois_display_whois($address);
-    }
-    else {
-      $output .= t("You cannot do more than %number whois lookups per hour. Please try again later.", array('%number' => variable_get('whois_hourly_threshold', 13)));
-    }
-    if (isset($_POST['address'])) {
-      // Avoid debug information(devel.module) from being added to the preview.
-      $GLOBALS['devel_shutdown'] = FALSE;
-
-      // Stop further processing and return requested data.
-      exit(drupal_json(array('html' => $output)));
-    }
-    drupal_set_breadcrumb(array(l(t('Home'), '<front>'), l(t('Whois lookup'), 'whois')));
-  }
-  // Load JS and CSS for dynamic lookups using AJAX.
-  if (variable_get('whois_enable_ajax', 1)) {
-    $path = drupal_get_path('module', 'whois');
-    drupal_add_js($path . '/whois.js');
-    drupal_add_css($path . '/whois.css');
-  }
-
-  return drupal_get_form('whois_whois_form') . '<div id="live-preview-container"><div id="live-whois-preview">' . $output . '</div><div id="live-whois-preview-background"></div></div>';
 }
 
 /**
@@ -164,79 +90,12 @@ function whois_block($op = 'list', $delta = 0) {
   }
 } // end whois_block
 
-/**
- * Implementation of hook_form().
- */
-function whois_whois_form() {
-  $form = array();
-
-  $form['whois_lookup'] = array(
-    '#type' => 'fieldset',
-    '#collapsed' => TRUE,
-  );
-  $form['whois_lookup']['whois_address'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Lookup address'),
-    '#default_value' => arg(1),
-    '#required' => TRUE,
-    '#prefix' => '<div class="container-inline">',
-  );
-  $form['whois_lookup']['whois_submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Lookup'),
-    '#suffix' => '</div>',
-  );
-  $form['whois_lookup']['whois_description'] = array(
-    '#value' => '<div class="description" style="margin: 0;">' . t('Enter a domain name or IP address for <em>whois</em> information.') . '</div>',
-  );
-
-  return $form;
-}
-
-/**
- * Implementation of hook_form().
- * 
- * Produce a form for the mini_form block
- */
-function whois_whois_mini_form() {
-  $form = array();
-
-  $form['whois_address'] = array(
-    '#type' => 'textfield',
-    '#size' => 15,
-    '#required' => TRUE,
-  );
-  $form['whois_submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Lookup'),
-  );
-
-  return $form;
-}
-
-function whois_whois_form_submit($form, &$form_state) {
-  global $user;
-  $address = whois_parse_url($form_state['values']['whois_address']);
-
-  $form_state['redirect'] = 'whois/' . $address;
-  return;
-}
-
-/*
- *  Wrapper around whois_whois_form_submit
- */
-function whois_whois_mini_form_submit($form, &$form_state) {
-  whois_whois_form_submit($form, $form_state);
-  return;
-}
-
 
 function whois_display_whois($address) {
   $data = '';
   $result = whois_get_whois($address);
   if ($result) {
-    $option = variable_get('whois_output_method', 'html');
-    switch ($option) {
+    switch (variable_get('whois_output_method', 'html')) {
       case 'html':
         $data .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
         if (!empty($result['rawdata'])) {
@@ -295,14 +154,14 @@ function whois_display_whois($address) {
  */
 function whois_get_whois($address) {
   $data = '';
-  $path = drupal_get_path('module', 'whois') . '/phpwhois/whois.main.php';
+  $mod_path = drupal_get_path('module', 'whois');
 
-  if (!file_exists($path)) {
+  if (!file_exists($mod_path . '/phpwhois/whois.main.php')) {
     drupal_set_message(t('There are problems with <em>Whois lookup</em> setup. Report to the website administrators promptly!', array('@status' => url('admin/logs/status'))), 'error');
   }
   elseif ($address != '') {
-    include_once('phpwhois/whois.main.php');
-    include_once('phpwhois/whois.utils.php');
+    include_once($mod_path . '/phpwhois/whois.main.php');
+    include_once($mod_path . '/phpwhois/whois.utils.php');
     $whois = new Whois();
     if (variable_get('whois_log_watchdog', 1)) {
       // Watchdog entry for lookup request.
