@@ -200,14 +200,14 @@ function whois_parse_url($url) {
     return $url;
   }
   else {
-    $r  = "^(?:(?P<scheme>\w+)://)?";
-    $r .= "(?:(?P<login>\w+):(?P<pass>\w+)@)?";
-    $r .= "(?P<host>(?:(?P<subdomain>[\w\.]+)\.)?" . "(?P<domain>\w+\.(?P<extension>\w+)))";
-    $r .= "(?::(?P<port>\d+))?";
-    $r .= "(?P<path>[\w/]*/(?P<file>\w+(?:\.\w+)?)?)?";
-    $r .= "(?:\?(?P<arg>[\w=&]+))?";
-    $r .= "(?:#(?P<anchor>\w+))?";
-    $r = "!$r!";                                                // Delimiters
+    $r  = "^(?:(?P<scheme>\w+)://)?";             // e.g. http://
+    $r .= "(?:(?P<login>\w+):(?P<pass>\w+)@)?";   // e.g. username:password@
+    $r .= "(?P<host>(?:(?P<subdomain>[\w\.]+)\.)?" . "(?P<domain>\w+\.(?P<extension>\w+)))";  // e.g. www and example.com
+    $r .= "(?::(?P<port>\d+))?";                  // e.g. :80
+    $r .= "(?P<path>[\w/]*/(?P<file>\w+(?:\.\w+)?)?)?";   // e.g. /foo/bar/baz.html
+    $r .= "(?:\?(?P<arg>[\w=&]+))?";              // e.g. ?foo=1&bar=2
+    $r .= "(?:#(?P<anchor>\w+))?";                // e.g. #anchor42
+    $r = "!$r!";                                  // Delimiters
 
     $result = array();
     preg_match($r, $url, $result);
