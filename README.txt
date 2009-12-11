@@ -2,6 +2,7 @@ INTRODUCTION
 ------------
 
 Developer & current maintainer: Gurpartap Singh <gurpartap@gmail.com>
+Co-maintainer: Herman van Rink <rink@intifour.nl>
 
 Whois lookup enables Drupal installations to offer whois lookups for their users. The module depends on the phpWhois library available at: http://phpwhois.sf.net/
 
