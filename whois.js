@@ -101,7 +101,7 @@ Drupal.behaviors.liveWhoisPreview = function() {
         captcha_token: captcha_token
       },
       dataType: 'json',
-      timeout: 5000,
+      timeout: 10000,
       beforeSend: function() {
         progress_panel.appendTo('body').hide().fadeIn(200);
       },

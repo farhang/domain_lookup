@@ -1,10 +1,28 @@
-Whois lookup 6.x-1.2, not yet released
- * #653156: Unfixable whois_parse_url
+// $id$
 
-Whois lookup 6.x-1.1, 2008-Aug-12 
+Whois lookup 6.x-1.2, xxxx-xx-xx
+--------------------------------
+#653156 by helmo: Fixed Unfixable whois_parse_url().
+bug report #617994 by helmo, jvieille: Fixed bug in looking up IP address
+bug report #409552 by deviantintegral, helmo: Refactor whois_get_whois()
+bug report #497686 by xyber, helmo: Change the message used when the domain is available, and make it translatable
+bug report #617994 by helmo, jvieille: Fixed a line that went missing in the previous patch
+#519952 by pebosi: Changed Split files in inc files and remove variables.
+#497696 by kiamlaluno: Changed hook_requirements() must be in the installation file.
+#558576 by helmo: Fixed Link to sourceforge.net different now.
+#519952 by helmo: Moved back the mini_form function
+Added comments to regex in whois_parse_url()
+helmo: Code cleanup.
+#490062 by helmo: Fixed looking up a domain twice.
+#657062 by helmo: Added co-maintainer info to README.txt
+#349159 by helmo: Changed ajax timeout to 10 seconds' whois.js
+
+Whois lookup 6.x-1.1, 2008-Aug-12
+--------------------------------- 
  * Minor fix in whois.install
 
-Whois lookup 6.x-1.0
+Whois lookup 6.x-1.0, 2008-Aug-12
+---------------------------------
   New features:
     o #224736 - Hourly threshold for whois lookup request.
     o #151861 - Watchdog logging of lookup requests.
