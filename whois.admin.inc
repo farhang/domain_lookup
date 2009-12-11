@@ -1,6 +1,12 @@
 <?php
 // $Id$
 
+/**
+ * @file
+ * Settings functions for the Whois module.
+ */
+
+
 function whois_settings() {
   $form = array();
 

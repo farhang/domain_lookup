@@ -94,7 +94,7 @@ Drupal.behaviors.liveWhoisPreview = function() {
 
     $.ajax({
       type: "POST",
-      url: Drupal.settings.basePath + 'index.php?q=whois',
+      url: Drupal.settings.basePath + 'index.php?q=whois-ajax',
       data: {
         address: address,
         captcha_response: captcha_response,

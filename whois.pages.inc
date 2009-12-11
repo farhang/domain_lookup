@@ -1,6 +1,11 @@
 <?php
 // $Id$
 
+/**
+ * @file
+ * Contains the form and page functions
+ */
+
 
 function whois_whois_page() {
   if (!user_access('access whois')) {
@@ -17,13 +22,6 @@ function whois_whois_page() {
     }
     else {
       $output .= t("You cannot do more than %number whois lookups per hour. Please try again later.", array('%number' => variable_get('whois_hourly_threshold', 13)));
-    }
-    if (isset($_POST['address'])) {
-      // Avoid debug information(devel.module) from being added to the preview.
-      $GLOBALS['devel_shutdown'] = FALSE;
-
-      // Stop further processing and return requested data.
-      exit(drupal_json(array('html' => $output)));
     }
     drupal_set_breadcrumb(array(l(t('Home'), '<front>'), l(t('Whois lookup'), 'whois')));
   }

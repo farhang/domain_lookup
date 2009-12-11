@@ -36,6 +36,12 @@ function whois_menu() {
     'file' => 'whois.pages.inc',
     'type' => MENU_NORMAL_ITEM,
   );
+  $items['whois-ajax'] = array(
+    'title' => 'Whois lookup',
+    'page callback' => 'whois_ajax',
+    'access arguments' => array('access whois'),
+    'type' => MENU_CALLBACK,
+  );
   $items['admin/settings/whois'] = array(
     'title' => 'Whois lookup',
     'description' => 'Configure Whois lookup output style, dynamic(AJAX) results, hourly threshold, and more.',
@@ -99,6 +105,30 @@ function whois_whois_mini_form() {
 function whois_whois_mini_form_submit($form, &$form_state) {
   whois_whois_form_submit($form, $form_state);
   return;
+}
+
+function whois_ajax() {
+  if (!user_access('access whois')) {
+    return;
+  }
+
+  $output = '';
+  $address = !empty($_POST['address']) ? $_POST['address'] : arg(1);
+
+  if (isset($address)) {
+    // Check for hourly threshold.
+    if (flood_is_allowed('whois', variable_get('whois_hourly_threshold', 13))) {
+      $output .= whois_display_whois($address);
+    }
+    else {
+      $output .= t("You cannot do more than %number whois lookups per hour. Please try again later.", array('%number' => variable_get('whois_hourly_threshold', 13)));
+    }
+    // Avoid debug information(devel.module) from being added to the preview.
+    $GLOBALS['devel_shutdown'] = FALSE;
+
+    // Stop further processing and return requested data.
+    drupal_json(array('html' => $output));
+  }
 }
 
 function whois_display_whois($address) {
