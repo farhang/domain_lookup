@@ -1,3 +1,9 @@
+Whois lookup 6.x-1.2, not yet released
+ * #653156: Unfixable whois_parse_url
+
+Whois lookup 6.x-1.1, 2008-Aug-12 
+ * Minor fix in whois.install
+
 Whois lookup 6.x-1.0
   New features:
     o #224736 - Hourly threshold for whois lookup request.

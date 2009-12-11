@@ -30,15 +30,15 @@ function whois_menu() {
   $items = array();
 
   $items['whois'] = array(
-    'title' => t('Whois lookup'),
+    'title' => 'Whois lookup',
     'page callback' => 'whois_whois_page',
     'access arguments' => array('access whois'),
     'file' => 'whois.pages.inc',
     'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/settings/whois'] = array(
-    'title' => t('Whois lookup'),
-    'description' => t('Configure Whois lookup output style, dynamic(AJAX) results, hourly threshold, and more.'),
+    'title' => 'Whois lookup',
+    'description' => 'Configure Whois lookup output style, dynamic(AJAX) results, hourly threshold, and more.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('whois_settings'),
     'file' => 'whois.admin.inc',
@@ -216,10 +216,10 @@ function _whois_cleanup_address($address) {
   preg_match($r, $address, $result);
 
   if (!empty($address) && empty($result['domain'])) {
-    drupal_set_message("Invalid address received");
+    drupal_set_message(t("Invalid address received."));
   }
   elseif ($address != $result['domain']) {
-    drupal_set_message(t("Reduced '%address' to '%new'", array('%address' => $address, '%new' => $result['domain'])));
+    drupal_set_message(t("Reduced '%address' to '%new.'", array('%address' => $address, '%new' => $result['domain'])));
   }
 
   return $result['domain'];
