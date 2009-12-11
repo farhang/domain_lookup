@@ -170,6 +170,7 @@ function whois_get_whois($address) {
     drupal_set_message(t('There are problems with <em>Whois lookup</em> setup. Report to the website administrators promptly!', array('@status' => url('admin/logs/status'))), 'error');
   }
   elseif ($address != '') {
+    $address = _whois_cleanup_address($address);
     include_once($mod_path . '/phpwhois/whois.main.php');
     include_once($mod_path . '/phpwhois/whois.utils.php');
     $whois = new Whois();
@@ -185,34 +186,42 @@ function whois_get_whois($address) {
 }
 
 /**
- * Parse the user input to extract an IP or domainname.
+ * Parse the user input to remove some obvious mistakes.
  * Elements like http:// are removed
  *
- * @param $url
+ * @param $address
  *   The user input
  * 
  * @return 
  *   The cleaned up domain or IP to look up
  */
-function whois_parse_url($url) {
-  include_once('phpwhois/whois.ip.lib.php');
-  if (validip($url)) {
-    return $url;
-  }
-  else {
-    $r  = "^(?:(?P<scheme>\w+)://)?";             // e.g. http://
-    $r .= "(?:(?P<login>\w+):(?P<pass>\w+)@)?";   // e.g. username:password@
-    $r .= "(?P<host>(?:(?P<subdomain>[\w\.]+)\.)?" . "(?P<domain>\w+\.(?P<extension>\w+)))";  // e.g. www and example.com
-    $r .= "(?::(?P<port>\d+))?";                  // e.g. :80
-    $r .= "(?P<path>[\w/]*/(?P<file>\w+(?:\.\w+)?)?)?";   // e.g. /foo/bar/baz.html
-    $r .= "(?:\?(?P<arg>[\w=&]+))?";              // e.g. ?foo=1&bar=2
-    $r .= "(?:#(?P<anchor>\w+))?";                // e.g. #anchor42
-    $r = "!$r!";                                  // Delimiters
+function _whois_cleanup_address($address) {
 
-    $result = array();
-    preg_match($r, $url, $result);
+  $r  = "^(?:(?P<scheme>\w+)://)?";             // e.g. http://
+  $r .= "(?:(?P<login>\w+):(?P<pass>\w+)@)?";   // e.g. username:password@
 
-    return $result[6];
+  $r .= "(?:(?P<host>www\.(?=.*\..*)))?";    // e.g. www. the (?= is a lookahead to avoid removing www.com
+
+  // The interresting part we would like to preserve
+  // Matching very broad to avoid excluding things like IDN  
+  $r .= "(?P<domain>.+\.(?P<extension>.+))";  // e.g. www and example.com
+
+  $r .= "(?::(?P<port>\d+))?";                  // e.g. :80
+  $r .= "(?P<path>/[\w/]*(?P<file>\w+(?:\.\w+)?)?)?";   // e.g. /foo/bar/baz.html
+  $r .= "(?:\?(?P<arg>[\w=&]+))?";              // e.g. ?foo=1&bar=2
+  $r .= "(?:#(?P<anchor>\w+))?";                // e.g. #anchor42
+  $r = "!$r!";                                  // Delimiters
+
+  $result = array();
+  preg_match($r, $address, $result);
+
+  if (!empty($address) && empty($result['domain'])) {
+    drupal_set_message("Invalid address received");
   }
+  elseif ($address != $result['domain']) {
+    drupal_set_message(t("Reduced '%address' to '%new'", array('%address' => $address, '%new' => $result['domain'])));
+  }
+
+  return $result['domain'];
 }
 

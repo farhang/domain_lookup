@@ -8,7 +8,7 @@ function whois_whois_page() {
   }
 
   $output = '';
-  $address = $_POST['address'] ? whois_parse_url($_POST['address']) : arg(1);
+  $address = $_POST['address'] ? $_POST['address'] : arg(1);
 
   if (isset($address)) {
     // Check for hourly threshold.
@@ -69,9 +69,11 @@ function whois_whois_form() {
 
 function whois_whois_form_submit($form, &$form_state) {
   global $user;
-  $address = whois_parse_url($form_state['values']['whois_address']);
+  $address = $form_state['values']['whois_address'];
 
-  $form_state['redirect'] = 'whois/' . $address;
+  $address = _whois_cleanup_address($address);
+
+  $form_state['redirect'] = check_url('whois/' . $address);
   return;
 }
 
