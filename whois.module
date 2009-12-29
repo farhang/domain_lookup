@@ -134,16 +134,17 @@ function whois_ajax() {
 function whois_display_whois($address) {
   $data = '';
   $result = whois_get_whois($address);
+  $allowed_tags = array('a', 'b', 'i', 'br');
   if ($result) {
     switch (variable_get('whois_output_method', 'html')) {
       case 'html':
         $data .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
         if (!empty($result['rawdata'])) {
           $utils = new utils;
-          $data .= $utils->showHTML($result);
+          $data .= filter_xss(_whois_utf8_encode($utils->showHTML($result), $address), $allowed_tags);
         }
         else {
-          $data .= implode($whois->Query['errstr'], "\n<br />");
+          $data .= implode(check_plain(_whois_utf8_encode($whois->Query['errstr'])), "\n<br />");
         }  
         break;
 
@@ -152,18 +153,18 @@ function whois_display_whois($address) {
           $data .= theme('whois_domain_status', $address, $result['regrinfo']['registered'] != 'no', $result);
         }
         else {
-          $data .= implode($whois->Query['errstr'], "\n<br />");
+          $data .= implode(check_plain(_whois_utf8_encode($whois->Query['errstr'])), "\n<br />");
         }  
       break;
 
       case 'object':
         $data .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
         if ($whois->Query['status'] < 0) {
-          $data .= implode($whois->Query['errstr'], "\n<br />");
+          $data .= implode(check_plain(_whois_utf8_encode($whois->Query['errstr'])), "\n<br />");
         }
         else {
           $utils = new utils;
-          $data .= $utils->showObject($result);
+          $data .= filter_xss(_whois_utf8_encode($utils->showObject($result)), $allowed_tags);
         }
       break;
 
@@ -171,10 +172,10 @@ function whois_display_whois($address) {
       default:
         $data .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
         if (!empty($result['rawdata'])) {
-          $data .= '<pre>' . implode($result['rawdata'], "\n") . '</pre>';
+          $data .= '<pre>' . implode(check_plain(_whois_utf8_encode($result['rawdata'])), "\n") . '</pre>';
         }
         else {
-          $data .= implode($whois->Query['errstr'], "\n<br />");
+          $data .= implode(check_plain(_whois_utf8_encode($whois->Query['errstr'])), "\n<br />");
         } 
       break;
     }
@@ -254,5 +255,28 @@ function _whois_cleanup_address($address) {
   }
 
   return $result['domain'];
+}
+
+/**
+ * Detect the text encoding and encode it to UTF-8 when needed
+ *
+ * @param $str
+ *   The text to encode
+ * 
+ * @param $address
+ *   The address being looked up
+ *
+ * @return
+ *   The text encoded as UTF-8
+ */
+function _whois_utf8_encode(&$str, $address) {
+  $encoding = mb_detect_encoding($str);
+
+  // When a non-utf-8 encoding is detected, force an encoding.
+  // For some reason results from the .hu whois service detect as being utf-8 but are not, thyerefore the override.
+  if ( $encoding != 'UTF-8' || preg_match('/\.hu$/', $address)) {
+    $str = utf8_encode($str);
+  }
+  return $str;
 }
 
