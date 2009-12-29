@@ -197,7 +197,7 @@ function whois_get_whois($address) {
   $mod_path = drupal_get_path('module', 'whois');
 
   if (!file_exists($mod_path . '/phpwhois/whois.main.php')) {
-    drupal_set_message(t('There are problems with <em>Whois lookup</em> setup. Report to the website administrators promptly!', array('@status' => url('admin/logs/status'))), 'error');
+    drupal_set_message(t('There are problems with <em>Whois lookup</em> setup. Report to the website administrators promptly!', array('@status' => url('admin/reports/status'))), 'error');
   }
   elseif ($address != '') {
     $address = _whois_cleanup_address($address);
@@ -207,8 +207,9 @@ function whois_get_whois($address) {
     if (variable_get('whois_log_watchdog', 1)) {
       // Watchdog entry for lookup request.
       watchdog('whois',
-        t('Whois lookup for: %address', array('%address' => $address)),
-        array($address), WATCHDOG_NOTICE, l('View', "whois/$address") . ' · ' . l('Address', "http://$address/"));
+        'Whois lookup for: %address', 
+        array('%address' => $address),
+        WATCHDOG_NOTICE, l('View', "whois/$address") . ' · ' . l('Address', "http://$address/"));
     }
     return $whois->Lookup($address);
   }
