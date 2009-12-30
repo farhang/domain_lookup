@@ -103,6 +103,7 @@ function whois_whois_mini_form() {
  *  Wrapper around whois_whois_form_submit
  */
 function whois_whois_mini_form_submit($form, &$form_state) {
+  module_load_include('inc', 'whois', 'whois.pages');
   whois_whois_form_submit($form, $form_state);
   return;
 }

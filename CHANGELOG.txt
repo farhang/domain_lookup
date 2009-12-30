@@ -1,6 +1,12 @@
-// $id$
+// $Id$
 
-Whois lookup 6.x-1.2, xxxx-xx-xx
+
+Whois lookup 6.x-1.3, xxxx-xx-xx
+--------------------------------
+#670986 by helmo, BorisB: Fixed PHP errors.
+
+
+Whois lookup 6.x-1.2, 2009-12-30
 --------------------------------
 #653156 by helmo: Fixed Unfixable whois_parse_url().
 bug report #617994 by helmo, jvieille: Fixed bug in looking up IP address
