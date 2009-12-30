@@ -144,7 +144,7 @@ function whois_display_whois($address) {
           $data .= filter_xss(_whois_utf8_encode($utils->showHTML($result), $address), $allowed_tags);
         }
         else {
-          $data .= implode(check_plain(_whois_utf8_encode($whois->Query['errstr'])), "\n<br />");
+          $data .= check_plain(_whois_utf8_encode(implode("\n<br />", $whois->Query['errstr']), $address));
         }
         break;
 
@@ -153,18 +153,18 @@ function whois_display_whois($address) {
           $data .= theme('whois_domain_status', $address, $result['regrinfo']['registered'] != 'no', $result);
         }
         else {
-          $data .= implode(check_plain(_whois_utf8_encode($whois->Query['errstr'])), "\n<br />");
+          $data .= check_plain(_whois_utf8_encode(implode("\n<br />", $whois->Query['errstr']), $address));
         }
       break;
 
       case 'object':
         $data .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
         if ($whois->Query['status'] < 0) {
-          $data .= implode(check_plain(_whois_utf8_encode($whois->Query['errstr'])), "\n<br />");
+          $data .= check_plain(_whois_utf8_encode(implode("\n<br />", $whois->Query['errstr']), $address));
         }
         else {
           $utils = new utils;
-          $data .= filter_xss(_whois_utf8_encode($utils->showObject($result)), $allowed_tags);
+          $data .= '<pre>' . filter_xss(_whois_utf8_encode($utils->showObject($result), $address), $allowed_tags) . '</pre>';
         }
       break;
 
@@ -172,10 +172,10 @@ function whois_display_whois($address) {
       default:
         $data .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
         if (!empty($result['rawdata'])) {
-          $data .= '<pre>' . implode(check_plain(_whois_utf8_encode($result['rawdata'])), "\n") . '</pre>';
+          $data .= '<pre>' . check_plain(_whois_utf8_encode(implode("\n", $result['rawdata']), $address)) . '</pre>';
         }
         else {
-          $data .= implode(check_plain(_whois_utf8_encode($whois->Query['errstr'])), "\n<br />");
+          $data .= check_plain(_whois_utf8_encode(implode("\n<br />", $whois->Query['errstr']), $address));
         }
       break;
     }
