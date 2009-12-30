@@ -16,6 +16,8 @@ helmo: Code cleanup.
 #490062 by helmo: Fixed looking up a domain twice.
 #657062 by helmo: Added co-maintainer info to README.txt
 #349159 by helmo: Changed ajax timeout to 10 seconds' whois.js
+#657062 by helmo: Fixed two D6.x compatibility issues
+#509952 by helmo: Added utf support.
 
 Whois lookup 6.x-1.1, 2008-Aug-12
 --------------------------------- 

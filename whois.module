@@ -3,14 +3,14 @@
 
 
 /**
- * Implementation of hook_perm()
+ * Implementation of hook_perm().
  */
 function whois_perm() {
   return array('access whois');
 }
 
 /**
- * Implementation of hook_theme()
+ * Implementation of hook_theme().
  */
 function whois_theme() {
   return array(
@@ -24,7 +24,7 @@ function whois_theme() {
 }
 
 /**
- * Implementation of hook_menu()
+ * Implementation of hook_menu().
  */
 function whois_menu() {
   $items = array();
@@ -64,13 +64,13 @@ function whois_block($op = 'list', $delta = 0) {
   if ($op == "list") {
     $block[0]["info"] = t('Whois mini form');
     return $block;
-  } 
+  }
   elseif ($op == 'view') {
 
     switch ($delta) {
       case 0:
         $block['subject'] = 'Whois';
-        $block_content = drupal_get_form('whois_whois_mini_form'); 
+        $block_content = drupal_get_form('whois_whois_mini_form');
         break;
       }
     $block['content'] = $block_content;
@@ -80,7 +80,7 @@ function whois_block($op = 'list', $delta = 0) {
 
 /**
  * Implementation of hook_form().
- * 
+ *
  * Produce a form for the mini_form block
  */
 function whois_whois_mini_form() {
@@ -145,7 +145,7 @@ function whois_display_whois($address) {
         }
         else {
           $data .= implode(check_plain(_whois_utf8_encode($whois->Query['errstr'])), "\n<br />");
-        }  
+        }
         break;
 
       case 'html_status':
@@ -154,7 +154,7 @@ function whois_display_whois($address) {
         }
         else {
           $data .= implode(check_plain(_whois_utf8_encode($whois->Query['errstr'])), "\n<br />");
-        }  
+        }
       break;
 
       case 'object':
@@ -168,7 +168,7 @@ function whois_display_whois($address) {
         }
       break;
 
-      case 'basic': // 'basic' is the default 
+      case 'basic': // 'basic' is the default
       default:
         $data .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
         if (!empty($result['rawdata'])) {
@@ -176,7 +176,7 @@ function whois_display_whois($address) {
         }
         else {
           $data .= implode(check_plain(_whois_utf8_encode($whois->Query['errstr'])), "\n<br />");
-        } 
+        }
       break;
     }
   }
@@ -208,7 +208,7 @@ function whois_get_whois($address) {
     if (variable_get('whois_log_watchdog', 1)) {
       // Watchdog entry for lookup request.
       watchdog('whois',
-        'Whois lookup for: %address', 
+        'Whois lookup for: %address',
         array('%address' => $address),
         WATCHDOG_NOTICE, l('View', "whois/$address") . ' · ' . l('Address', "http://$address/"));
     }
@@ -223,8 +223,8 @@ function whois_get_whois($address) {
  *
  * @param $address
  *   The user input
- * 
- * @return 
+ *
+ * @return
  *   The cleaned up domain or IP to look up
  */
 function _whois_cleanup_address($address) {
@@ -235,7 +235,7 @@ function _whois_cleanup_address($address) {
   $r .= "(?:(?P<host>www\.(?=.*\..*)))?";    // e.g. www. the (?= is a lookahead to avoid removing www.com
 
   // The interresting part we would like to preserve
-  // Matching very broad to avoid excluding things like IDN  
+  // Matching very broad to avoid excluding things like IDN
   $r .= "(?P<domain>.+\.(?P<extension>.+))";  // e.g. www and example.com
 
   $r .= "(?::(?P<port>\d+))?";                  // e.g. :80
@@ -262,7 +262,7 @@ function _whois_cleanup_address($address) {
  *
  * @param $str
  *   The text to encode
- * 
+ *
  * @param $address
  *   The address being looked up
  *

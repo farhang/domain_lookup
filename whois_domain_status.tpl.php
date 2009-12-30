@@ -1,4 +1,11 @@
 <?php
+// $Id$
+
+/**
+ * @file
+ * Template for the Whois module's output method 'HTMLized status only'.
+ */
+
 
   if (!$registered) {
     echo t('The domain %domain is free', array('%domain' => $address)) ;

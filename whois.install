@@ -8,7 +8,7 @@
 
 
 /**
- * Implementation of hook_requirements()
+ * Implementation of hook_requirements().
  */
 function whois_requirements($phase) {
   $requirements = array();
