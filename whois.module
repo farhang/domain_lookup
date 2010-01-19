@@ -145,7 +145,7 @@ function whois_display_whois($address) {
           $data .= filter_xss(_whois_utf8_encode($utils->showHTML($result), $address), $allowed_tags);
         }
         else {
-          $data .= check_plain(_whois_utf8_encode(implode("\n<br />", $whois->Query['errstr']), $address));
+          $data .= _whois_handle_error($result, $address);
         }
         break;
 
@@ -154,14 +154,14 @@ function whois_display_whois($address) {
           $data .= theme('whois_domain_status', $address, $result['regrinfo']['registered'] != 'no', $result);
         }
         else {
-          $data .= check_plain(_whois_utf8_encode(implode("\n<br />", $whois->Query['errstr']), $address));
+          $data .= _whois_handle_error($result, $address);
         }
       break;
 
       case 'object':
         $data .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
         if ($whois->Query['status'] < 0) {
-          $data .= check_plain(_whois_utf8_encode(implode("\n<br />", $whois->Query['errstr']), $address));
+          $data .= _whois_handle_error($result, $address);
         }
         else {
           $utils = new utils;
@@ -176,7 +176,7 @@ function whois_display_whois($address) {
           $data .= '<pre>' . check_plain(_whois_utf8_encode(implode("\n", $result['rawdata']), $address)) . '</pre>';
         }
         else {
-          $data .= check_plain(_whois_utf8_encode(implode("\n<br />", $whois->Query['errstr']), $address));
+          $data .= _whois_handle_error($result, $address);
         }
       break;
     }
@@ -213,7 +213,13 @@ function whois_get_whois($address) {
         array('%address' => $address),
         WATCHDOG_NOTICE, l('View', "whois/$address") . ' · ' . l('Address', "http://$address/"));
     }
-    return $whois->Lookup($address);
+    $result = $whois->Lookup($address);
+    if (empty($result) || empty($result['rawdata'])) { 
+      $result['error_query'] = $whois->Query;
+    }
+    //drupal_set_message(print_r($whois, true));
+    //drupal_set_message('result:' . print_r($result, true));
+    return $result; 
   }
   return FALSE;
 }
@@ -281,3 +287,28 @@ function _whois_utf8_encode(&$str, $address) {
   return $str;
 }
 
+/**
+ * Format and check the error data returned from the phpwhois library
+ *
+ * @param &$result
+ *   The result array
+ *
+ * @param $address
+ *   The address being looked up
+ *
+ * @return
+ *   The error text encoded as UTF-8
+ */
+function _whois_handle_error(&$result, $address) {
+    $str = '';
+
+    if (is_array($result['error_query']['errstr'])) {
+      $str .= implode("\n<br />", $result['error_query']['errstr']);
+    } elseif (!empty($result['error_query']['errstr'])) {
+      $str .= $result['error_query']['errstr'];
+    } else {
+      $str .= t("No data was retreived from whois server");
+    }
+    $str = check_plain(_whois_utf8_encode($str, $address));
+    return $str;
+}
