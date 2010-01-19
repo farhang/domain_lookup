@@ -14,8 +14,8 @@ function whois_requirements($phase) {
   $requirements = array();
   $t = get_t();
   switch ($phase) {
-    case 'install' :
-    case 'runtime' :
+    case 'install':
+    case 'runtime':
       $path = drupal_get_path('module', 'whois') . '/phpwhois/whois.main.php';
       if (!file_exists($path)) {
         $requirements['whois'] = array(

@@ -33,7 +33,8 @@ function whois_settings() {
     '#default_value' => variable_get('whois_enable_ajax', 1),
     '#description' => t('Lookup and view the whois results dynamically (i.e. without reloading page) using AJAX request.'),
   );
-  $form['whois_settings']['whois_hourly_threshold'] = array('#type' => 'select',
+  $form['whois_settings']['whois_hourly_threshold'] = array(
+    '#type' => 'select',
     '#title' => t('Hourly threshold'),
     '#options' => drupal_map_assoc(array(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59)),
     '#default_value' => variable_get('whois_hourly_threshold', 13),
