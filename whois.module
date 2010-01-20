@@ -16,9 +16,11 @@ function whois_theme() {
   return array(
     'whois_domain_status' => array(
       'template' => 'whois_domain_status',
-      'arguments' => array('address' => NULL,       // The address that was looked up
-                            'registered' => NULL,   // Boolean, weather the domain is already registered
-                            'result_data' => NULL), // Full result data, optionally used in template to further customise the output
+      'arguments' => array(
+        'address' => NULL,      // The address that was looked up
+        'registered' => NULL,   // Boolean, weather the domain is already registered
+        'result_data' => NULL,  // Full result data, optionally used in template to further customise the output
+      ),
     ),
   );
 }
@@ -217,6 +219,7 @@ function whois_get_whois($address) {
     if (empty($result) || empty($result['rawdata'])) { 
       $result['error_query'] = $whois->Query;
     }
+    // Some debugging lines
     //drupal_set_message(print_r($whois, true));
     //drupal_set_message('result:' . print_r($result, true));
     return $result; 
@@ -300,15 +303,17 @@ function _whois_utf8_encode(&$str, $address) {
  *   The error text encoded as UTF-8
  */
 function _whois_handle_error(&$result, $address) {
-    $str = '';
+  $str = '';
 
-    if (is_array($result['error_query']['errstr'])) {
-      $str .= implode("\n<br />", $result['error_query']['errstr']);
-    } elseif (!empty($result['error_query']['errstr'])) {
-      $str .= $result['error_query']['errstr'];
-    } else {
-      $str .= t("No data was retreived from whois server");
-    }
-    $str = check_plain(_whois_utf8_encode($str, $address));
-    return $str;
+  if (is_array($result['error_query']['errstr'])) {
+    $str .= implode("\n<br />", $result['error_query']['errstr']);
+  }
+  elseif (!empty($result['error_query']['errstr'])) {
+    $str .= $result['error_query']['errstr'];
+  }
+  else {
+    $str .= t("No data was retreived from whois server");
+  }
+  $str = check_plain(_whois_utf8_encode($str, $address));
+  return $str;
 }
