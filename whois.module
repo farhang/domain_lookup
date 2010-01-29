@@ -283,8 +283,7 @@ function _whois_utf8_encode(&$str, $address) {
   $encoding = mb_detect_encoding($str);
 
   // When a non-utf-8 encoding is detected, force an encoding.
-  // For some reason results from the .hu whois service detect as being utf-8 but are not, thyerefore the override.
-  if ( $encoding != 'UTF-8' || preg_match('/\.hu$/', $address)) {
+  if ($encoding != 'UTF-8') {
     $str = utf8_encode($str);
   }
   return $str;
