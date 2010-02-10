@@ -40,11 +40,39 @@ function whois_settings() {
     '#default_value' => variable_get('whois_hourly_threshold', 13),
     '#description' => t('The maximum number of whois lookups a user can perform per hour.'),
   );
-  $form['whois_log_watchdog'] = array(
+  $form['whois_log'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Lookup log'),
+    '#description' => t('Log whois lookups.'),
+  );
+  $form['whois_log']['whois_log_watchdog'] = array(
     '#type' => 'checkbox',
     '#title' => t('Log watchdog entry'),
     '#default_value' => variable_get('whois_log_watchdog', 1),
     '#description' => t('Log a watchdog entry for each whois lookup performed.'),
+  );
+  $form['whois_log']['whois_log_watchdog_cached'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Log watchdog entry for cached domains also'),
+    '#default_value' => variable_get('whois_log_watchdog_cached', 0),
+    '#description' => t('Log a watchdog entry for each whois lookup performed even if it is cached.'),
+  );
+  $form['whois_cache'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Cache configuration'),
+    '#collapsed' => TRUE,
+  );
+  $form['whois_cache']['whois_cache_enable'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable cache'),
+    '#default_value' => variable_get('whois_cache_enable', 1),
+    '#description' => t('Enable the caching of whois records.'),
+  );
+  $form['whois_cache']['whois_cache_time'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Cache time'),
+    '#default_value' => variable_get('whois_cache_time', 86400),
+    '#description' => t('The length of time in seconds to cache whois lookup results. Set to "0" to never expire cached entries.'),
   );
   return system_settings_form($form);
 }

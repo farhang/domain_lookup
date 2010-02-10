@@ -142,7 +142,13 @@ function whois_display_whois($address) {
     switch (variable_get('whois_output_method', 'html')) {
       case 'html':
         $data .= '<h3>' . t('Whois lookup for %address:', array('%address' => $address)) . '</h3>';
+        if (!empty($result['whois_cached_on'])) {
+          $data .= "<p id='whois_cached_on'>" . t('Cached on:') . ' ' . format_date($result['whois_cached_on'], 'large') . "</p>";
+        }
         if (!empty($result['rawdata'])) {
+          $mod_path = drupal_get_path('module', 'whois');
+          include_once($mod_path . '/phpwhois/whois.main.php');
+          include_once($mod_path . '/phpwhois/whois.utils.php');
           $utils = new utils;
           $data .= filter_xss(_whois_utf8_encode($utils->showHTML($result), $address), $allowed_tags);
         }
@@ -166,6 +172,9 @@ function whois_display_whois($address) {
           $data .= _whois_handle_error($result, $address);
         }
         else {
+          $mod_path = drupal_get_path('module', 'whois');
+          include_once($mod_path . '/phpwhois/whois.main.php');
+          include_once($mod_path . '/phpwhois/whois.utils.php');
           $utils = new utils;
           $data .= '<pre>' . filter_xss(_whois_utf8_encode($utils->showObject($result), $address), $allowed_tags) . '</pre>';
         }
@@ -205,24 +214,42 @@ function whois_get_whois($address) {
   }
   elseif ($address != '') {
     $address = _whois_cleanup_address($address);
-    include_once($mod_path . '/phpwhois/whois.main.php');
-    include_once($mod_path . '/phpwhois/whois.utils.php');
-    $whois = new Whois();
-    if (variable_get('whois_log_watchdog', 1)) {
-      // Watchdog entry for lookup request.
-      watchdog('whois',
-        'Whois lookup for: %address',
-        array('%address' => $address),
-        WATCHDOG_NOTICE, l('View', "whois/$address") . ' · ' . l('Address', "http://$address/"));
+    // check cache first
+    $cid = 'whois-' . $address;
+    if (variable_get('whois_cache_enable', 1) && ($cache = cache_get($cid, "cache")) && !empty($cache->data)) {
+      if (variable_get('whois_log_watchdog', 1) && variable_get('whois_log_watchdog_cached', 0) ) {
+        // Watchdog entry for lookup request if logging cached lookup also.
+        watchdog('whois',
+          'Whois lookup(cached) for: @address',
+          array('@address' => $address),
+          WATCHDOG_NOTICE, l('View', "whois/$address") . ' · ' . l('Address', "http://$address/"));
+      }
+      $cache->data['whois_cached_on'] = $cache->created;
+      return $cache->data;
     }
-    $result = $whois->Lookup($address);
-    if (empty($result) || empty($result['rawdata'])) { 
-      $result['error_query'] = $whois->Query;
+    else {
+      include_once($mod_path . '/phpwhois/whois.main.php');
+      include_once($mod_path . '/phpwhois/whois.utils.php');
+      $whois = new Whois();
+      if (variable_get('whois_log_watchdog', 1)) {
+        // Watchdog entry for lookup request.
+        watchdog('whois',
+          'Whois lookup for: @address',
+          array('@address' => $address),
+          WATCHDOG_NOTICE, l('View', "whois/$address") . ' · ' . l('Address', "http://$address/"));
+      }
+      $result = $whois->Lookup($address);
+
+
+      if (empty($result) || empty($result['rawdata'])) {
+        $result['error_query'] = $whois->Query;
+      }
+      elseif (variable_get('whois_cache_enable', 1)) {
+        // cache results
+        cache_set($cid, $result, "cache", variable_get("whois_cache_time", 86400));
+      }
+      return $result;
     }
-    // Some debugging lines
-    //drupal_set_message(print_r($whois, true));
-    //drupal_set_message('result:' . print_r($result, true));
-    return $result; 
   }
   return FALSE;
 }
