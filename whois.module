@@ -285,7 +285,7 @@ function _whois_cleanup_address($address) {
   preg_match($r, $address, $result);
 
   if (!empty($address) && empty($result['domain'])) {
-    drupal_set_message(t("Invalid address received."));
+    drupal_set_message(t("Invalid address received."), 'error');
   }
   elseif ($address != $result['domain']) {
     drupal_set_message(t("Reduced '%address' to '%new.'", array('%address' => $address, '%new' => $result['domain'])));

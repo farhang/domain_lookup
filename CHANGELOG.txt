@@ -1,5 +1,8 @@
 // $Id$
 
+Whois lookup 6.x-1.x, 2010-xx-xx
+--------------------------------
+#756712 by GuyPaddock: Fixed _whois_cleanup_address() should use 'error' for drupal_set_message() 'type'.
 
 Whois lookup 6.x-1.3, 2010-01-02
 --------------------------------
