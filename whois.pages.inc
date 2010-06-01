@@ -13,7 +13,7 @@ function whois_whois_page() {
   }
 
   $output = '';
-  $address = $_POST['address'] ? $_POST['address'] : arg(1);
+  $address = !empty($_POST['address']) ? $_POST['address'] : arg(1);
 
   if (isset($address)) {
     // Check for hourly threshold.
