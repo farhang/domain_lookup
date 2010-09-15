@@ -107,7 +107,7 @@ Drupal.behaviors.liveWhoisPreview = function() {
       },
       success: function(data){
         if (typeof data['html'] == 'undefined' || data['html'] != 0) {
-          $('div#live-preview-container').slideDown().fadeTransition({
+          $('div#live-preview-container').slideDown().fadeTransition({
             html: data['html'],
             first: whois_div,
             second: whois_div_background
