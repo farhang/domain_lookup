@@ -1,4 +1,3 @@
-// $Id$
 
 /**
  * Fade Transition plugin. (c) 2008 Gurpartap Singh.
