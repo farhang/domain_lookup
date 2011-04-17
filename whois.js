@@ -1,3 +1,4 @@
+// $Id: whois.js,v 1.3 2009/12/11 13:00:46 helmo Exp $
 
 /**
  * Fade Transition plugin. (c) 2008 Gurpartap Singh.
@@ -106,7 +107,7 @@ Drupal.behaviors.liveWhoisPreview = function() {
       },
       success: function(data){
         if (typeof data['html'] == 'undefined' || data['html'] != 0) {
-          $('div#live-preview-container').slideDown().fadeTransition({
+          $('div#live-preview-container').slideDown().fadeTransition({
             html: data['html'],
             first: whois_div,
             second: whois_div_background

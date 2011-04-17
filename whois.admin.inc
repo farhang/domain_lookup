@@ -1,4 +1,5 @@
 <?php
+// $Id: whois.admin.inc,v 1.3.2.1 2010/02/10 07:50:07 helmo Exp $
 
 /**
  * @file

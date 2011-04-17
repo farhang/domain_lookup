@@ -1,4 +1,5 @@
 <?php
+// $Id: whois.pages.inc,v 1.4.2.1 2010/06/01 08:11:38 helmo Exp $
 
 /**
  * @file
@@ -10,7 +11,6 @@ function whois_whois_page() {
   if (!user_access('access whois')) {
     return;
   }
-
   $output = '';
   $address = !empty($_POST['address']) ? $_POST['address'] : arg(1);
 
@@ -31,7 +31,7 @@ function whois_whois_page() {
     drupal_add_css($path . '/whois.css');
   }
 
-  return drupal_get_form('whois_whois_form') . '<div id="live-preview-container"><div id="live-whois-preview">' . $output . '</div><div id="live-whois-preview-background"></div></div>';
+  return drupal_get_form('whois_whois_form') . '<div id="live-preview-container"><div id="live-whois-preview">' .$output . '</div><div id="live-whois-preview-background"></div></div>';
 }
 
 /**

@@ -1,3 +1,4 @@
+// $Id: CHANGELOG.txt,v 1.6.2.2 2010/06/07 07:38:20 helmo Exp $
 
 Whois lookup 6.x-1.x, 2010-xx-xx
 --------------------------------
