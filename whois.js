@@ -1,5 +1,4 @@
 // $Id: whois.js,v 1.3 2009/12/11 13:00:46 helmo Exp $
-// Modified
 /**
  * Fade Transition plugin. (c) 2008 Gurpartap Singh.
  */
